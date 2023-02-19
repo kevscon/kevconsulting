@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<p class="page-error">Sorry but that page does not exist!</p>
+
+<img src="{{url_for('static', filename='img/error.jpg')}}">
+
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<head>
+  <!-- update js file directory -->
+  <script src="{{ url_for('static', filename='js/historic-steel-shape-search.js') }}"></script>
+</head>
+
+<h1>AISC Historic Steel Shape Properties</h1>
+<div class="column">
+  <form method="POST" action="/historic-steel-shapes">
+
+    {{ form.hidden_tag() }}
+
+    <br>
+    {{ form.edition.label }}
+    {{ form.edition(class="btn btn-dark dropdown-toggle") }} <br><br>
+    {{ form.shape_type.label }}
+    {{ form.shape_type(class="btn btn-dark dropdown-toggle") }} <br><br>
+    {{ form.shape_section.label }}
+    {{ form.shape_section(class="btn btn-dark dropdown-toggle") }} <br><br>
+    {{ form.shape_label.label }}
+    {{ form.shape_label(class="btn btn-dark dropdown-toggle") }} <br><br>
+    {{ form.submit(class="btn btn-dark") }}
+
+  </form>
+</div>
+
+{% endblock %}

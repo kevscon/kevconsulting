@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<head>
+  <!-- update js file directory -->
+  <script src="{{ url_for('static', filename='js/steel-shape-properties.js') }}"></script>
+</head>
+
+<table id="prop-table" class="table table-dark">
+  <thead>
+    <tr>
+      {% for header in output_dict['property_headers'] %}
+        <th>{{ header|safe }}</th>
+      {% endfor %}
+    </tr>
+    <tr>
+      {% for header in output_dict['unit_headers'] %}
+        <th>{{ header|safe }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for shape_properties in output_dict['selected_properties'] %}
+      <tr>
+        {% for shape_property in shape_properties %}
+          <td>{{ shape_property }}</td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<img src="static/img/steel_shapes/{{ output_dict['shape_section'] }}.png" alt="" style="width: 30vw;"/>
+
+<p>
+  <input type="button" value="Copy to Clipboard" class="btn btn-dark" onclick="selectElementContents( document.getElementById('prop-table') );">
+</p>
+
+<p>
+	<a href="{{ url_for('download_file') }}" class="btn btn-dark">Download to Excel</a>
+</p>
+<p>
+	<a href="{{ url_for('steel_shapes') }}" class="btn btn-dark">Reset</a>
+</p>
+
+{% endblock %}
