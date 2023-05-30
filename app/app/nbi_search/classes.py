@@ -113,9 +113,67 @@ class NBIBridgeSearch:
         return self.place_df
 
     def get_bridge_data(self, structure_number):
-        self.bridge_data = self.state_df[self.state_df['STRUCTURE_NUMBER_008'] == structure_number]
-        return self.bridge_data
+        self.bridge_data_df = self.state_df[self.state_df['STRUCTURE_NUMBER_008'] == structure_number]
+        return self.bridge_data_df
 
     def export_data(self, output_filepath):
-        output_df = self.bridge_data
+        output_df = self.bridge_data_df
         output_df.to_excel(output_filepath, index=False)
+
+    def format_data(self, code_dict):
+        bridge_data = self.bridge_data_df.copy().squeeze()
+
+        def format_dimension(meter_dimension):
+            meter_to_foot_factor = 3.2808398950131235
+            foot_dimension = float(meter_dimension) * meter_to_foot_factor
+            return '{0:.2f}'.format(foot_dimension)
+
+        def format_latitude(latitude_dms):
+            seconds = float(latitude_dms[-4:])/100
+            minutes = int(latitude_dms[2:4])
+            degrees = int(latitude_dms[0:2])
+            return degrees + minutes/60 + seconds/3600
+
+        def format_longitude(longitude_dms):
+            seconds = float(longitude_dms[-4:])/100
+            minutes = int(longitude_dms[3:5])
+            degrees = int(longitude_dms[0:3])
+            return -1*(degrees + minutes/60 + seconds/3600)
+
+
+        bridge_data['FACILITY_CARRIED_007'] = bridge_data['FACILITY_CARRIED_007'].replace("'", '')
+        bridge_data['FEATURES_DESC_006A'] = bridge_data['FEATURES_DESC_006A'].replace("'", '')
+
+        # GENERAL
+        bridge_data['OPEN_CLOSED_POSTED_041'] = code_dict['status_dict'][bridge_data['OPEN_CLOSED_POSTED_041']]
+        if bridge_data['YEAR_RECONSTRUCTED_106'] == '0':
+            bridge_data['YEAR_RECONSTRUCTED_106'] = 'N/A'
+        bridge_data['OWNER_022'] = code_dict['owner_dict'][bridge_data['OWNER_022']]
+        # LOCATION
+        bridge_data['LAT_016'] = format_latitude(bridge_data['LAT_016'])
+        bridge_data['LONG_017'] = format_longitude(bridge_data['LONG_017'])
+        # SERVICE
+        bridge_data['SERVICE_ON_042A'] = code_dict['service_type_dict'][bridge_data['SERVICE_ON_042A']]
+        bridge_data['FUNCTIONAL_CLASS_026'] = code_dict['functional_classification_dict'][bridge_data['FUNCTIONAL_CLASS_026']]
+        bridge_data['ADT_029'] = "{:,}".format(int(bridge_data['ADT_029']))
+        # DIMENSIONS
+        bridge_data['STRUCTURE_LEN_MT_049'] = format_dimension(bridge_data['STRUCTURE_LEN_MT_049'])
+        bridge_data['MAX_SPAN_LEN_MT_048'] = format_dimension(bridge_data['MAX_SPAN_LEN_MT_048'])
+        bridge_data['DECK_WIDTH_MT_052'] = format_dimension(bridge_data['DECK_WIDTH_MT_052'])
+        bridge_data['ROADWAY_WIDTH_MT_051'] = format_dimension(bridge_data['ROADWAY_WIDTH_MT_051'])
+        if bridge_data['VERT_CLR_OVER_MT_053'] == '99.99':
+            bridge_data['VERT_CLR_OVER_MT_053'] = 'N/A'
+        else:
+            bridge_data['VERT_CLR_OVER_MT_053'] = format_dimension(float(bridge_data['VERT_CLR_OVER_MT_053']))
+        # DESIGN
+        bridge_data['STRUCTURE_KIND_043A'] = code_dict['material_dict'][bridge_data['STRUCTURE_KIND_043A']]
+        bridge_data['STRUCTURE_TYPE_043B'] = code_dict['design_dict'][bridge_data['STRUCTURE_TYPE_043B']]
+        bridge_data['DECK_STRUCTURE_TYPE_107'] = code_dict['deck_dict'][bridge_data['DECK_STRUCTURE_TYPE_107']]
+        bridge_data['SURFACE_TYPE_108A'] = code_dict['wearing_surface_dict'][bridge_data['SURFACE_TYPE_108A']]
+        bridge_data['DECK_PROTECTION_108C'] = code_dict['deck_protection_dict'][bridge_data['DECK_PROTECTION_108C']]
+        bridge_data['DESIGN_LOAD_031'] = code_dict['design_load_dict'][bridge_data['DESIGN_LOAD_031']]
+        # LOAD RATING
+        bridge_data['OPR_RATING_METH_063'] = code_dict['rating_method_dict'][bridge_data['OPR_RATING_METH_063']]
+        bridge_data['INV_RATING_METH_065'] = code_dict['rating_method_dict'][bridge_data['INV_RATING_METH_065']]
+
+        return bridge_data
