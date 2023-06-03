@@ -123,38 +123,60 @@ class NBIBridgeSearch:
     def format_data(self, code_dict):
         bridge_data = self.bridge_data_df.copy().squeeze()
 
+        def decode(code, code_dict):
+            try:
+                return code_dict[code]
+            except:
+                return 'N/A'
+
         def format_dimension(meter_dimension):
-            meter_to_foot_factor = 3.2808398950131235
-            foot_dimension = float(meter_dimension) * meter_to_foot_factor
-            return '{0:.2f}'.format(foot_dimension)
+            try:
+                meter_to_foot_factor = 3.2808398950131235
+                foot_dimension = float(meter_dimension) * meter_to_foot_factor
+                return '{0:.2f}'.format(foot_dimension)
+            except:
+                return 'N/A'
 
         def format_latitude(latitude_dms):
-            seconds = float(latitude_dms[-4:])/100
-            minutes = int(latitude_dms[2:4])
-            degrees = int(latitude_dms[0:2])
-            return degrees + minutes/60 + seconds/3600
+            try:
+                seconds = float(latitude_dms[-4:])/100
+                minutes = int(latitude_dms[2:4])
+                degrees = int(latitude_dms[0:2])
+                return degrees + minutes/60 + seconds/3600
+            except:
+                return 'N/A'
 
         def format_longitude(longitude_dms):
-            seconds = float(longitude_dms[-4:])/100
-            minutes = int(longitude_dms[3:5])
-            degrees = int(longitude_dms[0:3])
-            return -1*(degrees + minutes/60 + seconds/3600)
+            try:
+                seconds = float(longitude_dms[-4:])/100
+                minutes = int(longitude_dms[3:5])
+                degrees = int(longitude_dms[0:3])
+                return -1*(degrees + minutes/60 + seconds/3600)
+            except:
+                return 'N/A'
 
+        def format_tons(metric_tons):
+            try:
+                metric_to_ton_factor = 1.10231
+                tons = float(metric_tons) * metric_to_ton_factor
+                return '{0:.1f}'.format(tons)
+            except:
+                return 'N/A'
 
         bridge_data['FACILITY_CARRIED_007'] = bridge_data['FACILITY_CARRIED_007'].replace("'", '')
         bridge_data['FEATURES_DESC_006A'] = bridge_data['FEATURES_DESC_006A'].replace("'", '')
 
         # GENERAL
-        bridge_data['OPEN_CLOSED_POSTED_041'] = code_dict['status_dict'][bridge_data['OPEN_CLOSED_POSTED_041']]
+        bridge_data['OPEN_CLOSED_POSTED_041'] = decode(bridge_data['OPEN_CLOSED_POSTED_041'], code_dict['status_dict'])
         if bridge_data['YEAR_RECONSTRUCTED_106'] == '0':
             bridge_data['YEAR_RECONSTRUCTED_106'] = 'N/A'
-        bridge_data['OWNER_022'] = code_dict['owner_dict'][bridge_data['OWNER_022']]
+        bridge_data['OWNER_022'] = decode(bridge_data['OWNER_022'], code_dict['owner_dict'])
         # LOCATION
         bridge_data['LAT_016'] = format_latitude(bridge_data['LAT_016'])
         bridge_data['LONG_017'] = format_longitude(bridge_data['LONG_017'])
         # SERVICE
-        bridge_data['SERVICE_ON_042A'] = code_dict['service_type_dict'][bridge_data['SERVICE_ON_042A']]
-        bridge_data['FUNCTIONAL_CLASS_026'] = code_dict['functional_classification_dict'][bridge_data['FUNCTIONAL_CLASS_026']]
+        bridge_data['SERVICE_ON_042A'] = decode(bridge_data['SERVICE_ON_042A'], code_dict['service_type_dict'])
+        bridge_data['FUNCTIONAL_CLASS_026'] = decode(bridge_data['FUNCTIONAL_CLASS_026'], code_dict['functional_classification_dict'])
         bridge_data['ADT_029'] = "{:,}".format(int(bridge_data['ADT_029']))
         # DIMENSIONS
         bridge_data['STRUCTURE_LEN_MT_049'] = format_dimension(bridge_data['STRUCTURE_LEN_MT_049'])
@@ -162,18 +184,20 @@ class NBIBridgeSearch:
         bridge_data['DECK_WIDTH_MT_052'] = format_dimension(bridge_data['DECK_WIDTH_MT_052'])
         bridge_data['ROADWAY_WIDTH_MT_051'] = format_dimension(bridge_data['ROADWAY_WIDTH_MT_051'])
         if bridge_data['VERT_CLR_OVER_MT_053'] == '99.99':
-            bridge_data['VERT_CLR_OVER_MT_053'] = 'N/A'
+            bridge_data['VERT_CLR_OVER_MT_053'] = '> 325'
         else:
             bridge_data['VERT_CLR_OVER_MT_053'] = format_dimension(float(bridge_data['VERT_CLR_OVER_MT_053']))
         # DESIGN
-        bridge_data['STRUCTURE_KIND_043A'] = code_dict['material_dict'][bridge_data['STRUCTURE_KIND_043A']]
-        bridge_data['STRUCTURE_TYPE_043B'] = code_dict['design_dict'][bridge_data['STRUCTURE_TYPE_043B']]
-        bridge_data['DECK_STRUCTURE_TYPE_107'] = code_dict['deck_dict'][bridge_data['DECK_STRUCTURE_TYPE_107']]
-        bridge_data['SURFACE_TYPE_108A'] = code_dict['wearing_surface_dict'][bridge_data['SURFACE_TYPE_108A']]
-        bridge_data['DECK_PROTECTION_108C'] = code_dict['deck_protection_dict'][bridge_data['DECK_PROTECTION_108C']]
-        bridge_data['DESIGN_LOAD_031'] = code_dict['design_load_dict'][bridge_data['DESIGN_LOAD_031']]
+        bridge_data['STRUCTURE_KIND_043A'] = decode(bridge_data['STRUCTURE_KIND_043A'], code_dict['material_dict'])
+        bridge_data['STRUCTURE_TYPE_043B'] = decode(bridge_data['STRUCTURE_TYPE_043B'], code_dict['design_dict'])
+        bridge_data['DECK_STRUCTURE_TYPE_107'] = decode(bridge_data['DECK_STRUCTURE_TYPE_107'], code_dict['deck_dict'])
+        bridge_data['SURFACE_TYPE_108A'] = decode(bridge_data['SURFACE_TYPE_108A'], code_dict['wearing_surface_dict'])
+        bridge_data['DECK_PROTECTION_108C'] = decode(bridge_data['DECK_PROTECTION_108C'], code_dict['deck_protection_dict'])
+        bridge_data['DESIGN_LOAD_031'] = decode(bridge_data['DESIGN_LOAD_031'], code_dict['design_load_dict'])
         # LOAD RATING
-        bridge_data['OPR_RATING_METH_063'] = code_dict['rating_method_dict'][bridge_data['OPR_RATING_METH_063']]
-        bridge_data['INV_RATING_METH_065'] = code_dict['rating_method_dict'][bridge_data['INV_RATING_METH_065']]
+        bridge_data['OPERATING_RATING_064'] = format_tons(bridge_data['OPERATING_RATING_064'])
+        bridge_data['OPR_RATING_METH_063'] = decode(bridge_data['OPR_RATING_METH_063'], code_dict['rating_method_dict'])
+        bridge_data['INVENTORY_RATING_066'] = format_tons(bridge_data['INVENTORY_RATING_066'])
+        bridge_data['INV_RATING_METH_065'] = decode(bridge_data['INV_RATING_METH_065'], code_dict['rating_method_dict'])
 
         return bridge_data
