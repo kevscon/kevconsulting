@@ -174,6 +174,8 @@ class NBIBridgeSearch:
         # LOCATION
         bridge_data['LAT_016'] = format_latitude(bridge_data['LAT_016'])
         bridge_data['LONG_017'] = format_longitude(bridge_data['LONG_017'])
+        if bridge_data['STATE_CODE_001'] == '66':
+            bridge_data['LONG_017'] = -1 * bridge_data['LONG_017']
         # SERVICE
         bridge_data['SERVICE_ON_042A'] = decode(bridge_data['SERVICE_ON_042A'], code_dict['service_type_dict'])
         bridge_data['FUNCTIONAL_CLASS_026'] = decode(bridge_data['FUNCTIONAL_CLASS_026'], code_dict['functional_classification_dict'])

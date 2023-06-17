@@ -57,6 +57,57 @@ def filter_bridges():
     return bridge_list
 
 
+def coordinate_bridges():
+    search_input = request.form['coordinate']
+    latitude = float(search_input.split(',')[0].strip())
+    longitude = float(search_input.split(',')[1].strip())
+    search_coordinate = [latitude, longitude]
+
+    search_radius = 1/2
+    tolerance = 1/2 / 100
+    low_lat = search_coordinate[0] - tolerance
+    high_lat = search_coordinate[0] + tolerance
+
+    nbi_df = pd.read_csv(directory + 'nbi_df.csv', index_col=0)
+    search_df = nbi_df[(nbi_df['LAT_016'] >= low_lat) & (nbi_df['LAT_016'] <= high_lat)]
+
+    from math import radians, cos, sin, asin, sqrt
+
+    def haversine(coord_1, coord_2):
+        """
+        Calculate the great circle distance in kilometers between two points
+        on the earth (specified in decimal degrees)
+        """
+        lat_1 = coord_1[0]
+        lon_1 = coord_1[1]
+        lat_2 = coord_2[0]
+        lon_2 = coord_2[1]
+
+        # convert decimal degrees to radians
+        lat_1, lon_1, lat_2, lon_2,  = map(radians, [lat_1, lon_1, lat_2, lon_2])
+
+        # haversine formula
+        d_lat = lat_2 - lat_1
+        d_lon = lon_2 - lon_1
+        a = sin(d_lat/2)**2 + cos(lat_1) * cos(lat_2) * sin(d_lon/2)**2
+        c = 2 * asin(sqrt(a))
+        r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+        return c * r
+
+    search_df['DISTANCE'] = search_df.apply(lambda x: haversine(search_coordinate, [x['LAT_016'], x['LONG_017']]), axis=1)
+    bridge_list = search_df[search_df['DISTANCE'] <= search_radius].sort_values('DISTANCE').to_dict('records')
+
+    return bridge_list
+
+
+def search_structure_number():
+    structure_number = request.form['structure_number']
+    nbi_df = pd.read_csv(directory + 'nbi_df.csv', usecols=['STRUCTURE_NUMBER_008', 'STATE_CODE_001'])
+    state_postal = nbi_df[nbi_df['STRUCTURE_NUMBER_008'] == structure_number]['STATE_CODE_001'].values[0]
+    bridge_data = return_bridge_properties(state_postal, structure_number)
+    return bridge_data
+
+
 def return_bridge_properties(state_postal, structure_number):
 
     from app.app.nbi_search.classes import NBIBridgeSearch
@@ -72,55 +123,5 @@ def return_bridge_properties(state_postal, structure_number):
         bridge_data['PLACE_CODE_004'] = fips_class.get_place_name(bridge_data['PLACE_CODE_004'])
     except:
         bridge_data['PLACE_CODE_004'] = 'N/A'
-    # def format_description(description):
-    #     return description.replace("'", '')
-    #
-    # def format_latitude(latitude_dms):
-    #     seconds = float(latitude_dms[-4:])/100
-    #     minutes = int(latitude_dms[2:4])
-    #     degrees = int(latitude_dms[0:2])
-    #     return degrees + minutes/60 + seconds/3600
-    #
-    # def format_longitude(longitude_dms):
-    #     seconds = float(longitude_dms[-4:])/100
-    #     minutes = int(longitude_dms[3:5])
-    #     degrees = int(longitude_dms[0:3])
-    #     return -1*(degrees + minutes/60 + seconds/3600)
-    #
-    # def format_dimension(meter_dimension):
-    #     meter_to_foot_factor = 3.2808398950131235
-    #     foot_dimension = float(meter_dimension) * meter_to_foot_factor
-    #     return '{0:.2f}'.format(foot_dimension)
-    #
-    # material_dict = {
-    #     '1': 'Concrete',
-    #     '2': 'Concrete continuous',
-    #     '3': 'Steel',
-    #     '4': 'Steel continuous',
-    #     '5': 'Prestressed concrete',
-    #     '6': 'Prestressed concrete continuous',
-    #     '7': 'Wood or Timber',
-    #     '8': 'Masonry',
-    #     '9': 'Aluminum, Wrought Iron, or Cast Iron',
-    #     '0': 'Other'
-    # }
-    #
-    # bridge_data['FACILITY_CARRIED_007'] = format_description(bridge_data['FACILITY_CARRIED_007'])
-    # bridge_data['FEATURES_DESC_006A'] = format_description(bridge_data['FEATURES_DESC_006A'])
-    #
-    # fips_class = FIPSData(state_fips_df, county_fips_df, place_fips_df)
-    # bridge_data['STATE_CODE_001'] = fips_class.get_state_name(bridge_data['STATE_CODE_001'])
-    # bridge_data['COUNTY_CODE_003'] = fips_class.get_county_name(bridge_data['COUNTY_CODE_003'])
-    # try:
-    #     bridge_data['PLACE_CODE_004'] = fips_class.get_place_name(bridge_data['PLACE_CODE_004'])
-    # except:
-    #     bridge_data['PLACE_CODE_004'] = 'N/A'
-    #
-    # bridge_data['LAT_016'] = format_latitude(bridge_data['LAT_016'])
-    # bridge_data['LONG_017'] = format_longitude(bridge_data['LONG_017'])
-    #
-    # bridge_data['STRUCTURE_LEN_MT_049'] = format_dimension(bridge_data['STRUCTURE_LEN_MT_049'])
-    #
-    # bridge_data['STRUCTURE_KIND_043A'] = material_dict[bridge_data['STRUCTURE_KIND_043A']]
 
     return bridge_data
